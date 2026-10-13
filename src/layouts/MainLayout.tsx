@@ -21,6 +21,7 @@ const menuItems = [
       { key: '/restaurant/branding', label: 'Брендинг' },
       { key: '/restaurant/qr', label: 'QR коды' },
       { key: '/restaurant/menu', label: 'Меню' },
+      { key: '/restaurant/pairings', label: 'Пары блюд' },
       { key: '/restaurant/tables', label: 'Столы' },
     ],
   },
