@@ -30,11 +30,18 @@ export async function adminFetch<T>(path: string, opts: FetchOpts = {}): Promise
     params.set('restaurantId', restaurantId)
     for (const [k, v] of Object.entries(opts.query || {})) if (v) params.set(k, v)
   }
-  const res = await fetch(`${API}${path}${params.size ? `?${params}` : ''}`, {
-    method,
-    headers: { 'Content-Type': 'application/json' },
-    body: method === 'GET' ? undefined : JSON.stringify({ restaurantId, ...opts.body }),
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API}${path}${params.size ? `?${params}` : ''}`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: method === 'GET' ? undefined : JSON.stringify({ restaurantId, ...opts.body }),
+    })
+  } catch {
+    // Браузер не достучался до сервера: нет интернета, сервер перезапускается
+    // после обновления или запрос заблокировало расширение браузера.
+    throw new ApiError('Сервер не ответил. Проверьте интернет и нажмите «Ещё раз»; если не поможет — отключите блокировщик рекламы для этого сайта.', 0)
+  }
   const json = await res.json().catch(() => ({}))
   if (!res.ok) throw new ApiError(json.error || `Ошибка ${res.status}`, res.status)
   return json as T
