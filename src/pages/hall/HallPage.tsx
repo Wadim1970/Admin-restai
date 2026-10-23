@@ -8,8 +8,7 @@ import {
   EditOutlined, LeftOutlined, PlusOutlined, ReloadOutlined, RightOutlined, RotateLeftOutlined, RotateRightOutlined, SaveOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import AccessGate from '../../components/AccessGate'
-import { adminFetch, ApiError, type Access } from '../../lib/adminApi'
+import { adminFetch } from '../../lib/adminApi'
 import type { HallResponse, Layout, Shape } from './types'
 import { STATUS, ZONE_LABELS, dateCaption, duration, money, zoneLabel } from './format'
 import FloorPlan, { defaultSize, effectiveLayouts } from './FloorPlan'
@@ -49,7 +48,7 @@ function Legend({ mode }: { mode: HallResponse['mode'] }) {
   )
 }
 
-function HallInner({ access, deny }: { access: Access; deny: () => void }) {
+export default function HallPage() {
   const [params, setParams] = useSearchParams()
   const [hall, setHall] = useState<HallResponse | null>(null)
   const [error, setError] = useState('')
@@ -66,14 +65,7 @@ function HallInner({ access, deny }: { access: Access; deny: () => void }) {
   const date = params.get('date') || ''
   const reqId = useRef(0)
 
-  const call = useCallback(async <T,>(path: string, opts?: Parameters<typeof adminFetch>[2]) => {
-    try {
-      return await adminFetch<T>(access, path, opts)
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) deny()
-      throw e
-    }
-  }, [access, deny])
+  const call = adminFetch
 
   const load = useCallback(async () => {
     const id = ++reqId.current
@@ -326,8 +318,6 @@ function HallInner({ access, deny }: { access: Access; deny: () => void }) {
       </Modal>
 
       <TableDrawer
-        access={access}
-        deny={deny}
         tableId={openTable}
         date={hall.date}
         dayRange={hall.day}
@@ -336,13 +326,5 @@ function HallInner({ access, deny }: { access: Access; deny: () => void }) {
         onChanged={load}
       />
     </div>
-  )
-}
-
-export default function HallPage() {
-  return (
-    <AccessGate title="Зал">
-      {(access, deny) => <HallInner access={access} deny={deny} />}
-    </AccessGate>
   )
 }

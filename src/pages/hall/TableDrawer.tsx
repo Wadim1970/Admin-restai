@@ -3,7 +3,7 @@ import {
   Alert, Button, Collapse, Descriptions, Drawer, Empty, Popconfirm, Rate, Segmented, Select, Space, Spin, Tabs, Tag, Tooltip, Typography, message,
 } from 'antd'
 import { PlusOutlined, UserAddOutlined } from '@ant-design/icons'
-import { adminFetch, ApiError, type Access } from '../../lib/adminApi'
+import { adminFetch } from '../../lib/adminApi'
 import type { Reservation, TableDayResponse, TableSession } from './types'
 import {
   RES_STATUS, STATUS, callLabel, dateCaption, dateIn, duration, money, plural, reaction, shortName, timeIn, zoneLabel,
@@ -13,8 +13,6 @@ import ReservationModal from './ReservationModal'
 const { Text } = Typography
 
 interface Props {
-  access: Access
-  deny: () => void
   tableId: string | null
   date: string
   dayRange: { from: string; to: string }
@@ -130,7 +128,7 @@ function SessionDetails({ s, tz }: { s: TableSession; tz: string }) {
   )
 }
 
-export default function TableDrawer({ access, deny, tableId, date, dayRange, waiters, onClose, onChanged }: Props) {
+export default function TableDrawer({ tableId, date, dayRange, waiters, onClose, onChanged }: Props) {
   const [data, setData] = useState<TableDayResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [tab, setTab] = useState<string>('history')
@@ -139,14 +137,7 @@ export default function TableDrawer({ access, deny, tableId, date, dayRange, wai
   const [assignWaiter, setAssignWaiter] = useState<string | undefined>()
   const [assignKind, setAssignKind] = useState<'day' | 'permanent'>('permanent')
 
-  const call = useCallback(async <T,>(path: string, opts?: Parameters<typeof adminFetch>[2]) => {
-    try {
-      return await adminFetch<T>(access, path, opts)
-    } catch (e) {
-      if (e instanceof ApiError && e.status === 401) deny()
-      throw e
-    }
-  }, [access, deny])
+  const call = adminFetch
 
   const load = useCallback(async (keepTab = false) => {
     if (!tableId) return

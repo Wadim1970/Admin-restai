@@ -5,15 +5,14 @@ import {
 } from 'antd'
 import { PlusOutlined, ReloadOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import { API, currentRestaurantId } from '../../lib/adminApi'
 
 // Пары блюд для подсказки гостю «к пицце отлично подходит салат…».
-// Данные — на сервере официанта (Waiter-app, api/pairings/*), доступ по
-// токену админки PAIRINGS_ADMIN_TOKEN: входа в админку пока нет, поэтому
-// токен вводится здесь и хранится только в этой вкладке браузера.
+// Данные — на сервере официанта (Waiter-app, api/pairings/*), ресторан —
+// текущий ресторан кабинета (lib/adminApi).
 
 const { Title, Text, Paragraph } = Typography
 
-const API = (import.meta.env.VITE_WAITER_API_URL || 'https://waiter.restai.pro').replace(/\/$/, '')
 
 interface Pair {
   id: string
@@ -46,16 +45,8 @@ const STATE_LABEL: Record<string, { text: string; color: string }> = {
   error: { text: 'Ошибка', color: 'error' },
 }
 
-function readStore(storage: Storage, key: string) {
-  try { return storage.getItem(key) || '' } catch { return '' }
-}
-function writeStore(storage: Storage, key: string, value: string) {
-  try { storage.setItem(key, value) } catch { /* приватный режим */ }
-}
-
 export default function PairingsPage() {
-  const [restaurantId, setRestaurantId] = useState(() => readStore(localStorage, 'pairings_restaurant_id'))
-  const [token, setToken] = useState(() => readStore(sessionStorage, 'pairings_admin_token'))
+  const restaurantId = currentRestaurantId()
   const [pairs, setPairs] = useState<Pair[]>([])
   const [menu, setMenu] = useState<MenuItem[]>([])
   const [state, setState] = useState<PairingState | null>(null)
@@ -72,15 +63,14 @@ export default function PairingsPage() {
   const call = useCallback(async (path: string, init: RequestInit = {}) => {
     const res = await fetch(`${API}${path}`, {
       ...init,
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token, ...init.headers },
+      headers: { 'Content-Type': 'application/json', ...init.headers },
     })
     const json = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(json.error || `Ошибка ${res.status}`)
     return json
-  }, [token])
+  }, [])
 
   const load = useCallback(async () => {
-    if (!restaurantId || !token) return
     setLoading(true)
     setLoadError('')
     try {
@@ -93,17 +83,11 @@ export default function PairingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [call, restaurantId, token])
+  }, [call, restaurantId])
 
   useEffect(() => { load() }, [load])
   useEffect(() => () => { if (pollRef.current) window.clearInterval(pollRef.current) }, [])
 
-  const saveAccess = (values: { restaurantId: string; token: string }) => {
-    writeStore(localStorage, 'pairings_restaurant_id', values.restaurantId.trim())
-    writeStore(sessionStorage, 'pairings_admin_token', values.token.trim())
-    setRestaurantId(values.restaurantId.trim())
-    setToken(values.token.trim())
-  }
 
   // Расчёт идёт на сервере 1–3 минуты: запускаем и опрашиваем состояние.
   const regenerate = async () => {
@@ -271,25 +255,9 @@ export default function PairingsPage() {
         Выключенная пара не вернётся при следующем расчёте. Пара с поправленным текстом считается ручной и тоже не перезаписывается.
       </Paragraph>
 
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <Form
-          layout="inline"
-          initialValues={{ restaurantId, token }}
-          onFinish={saveAccess}
-        >
-          <Form.Item label="ID ресторана" name="restaurantId" rules={[{ required: true, message: 'Укажите ID' }]}>
-            <Input style={{ width: 340 }} placeholder="dd89773c-…" />
-          </Form.Item>
-          <Form.Item label="Токен админки" name="token" rules={[{ required: true, message: 'Укажите токен' }]}>
-            <Input.Password style={{ width: 260 }} placeholder="PAIRINGS_ADMIN_TOKEN" />
-          </Form.Item>
-          <Button type="primary" htmlType="submit">Открыть</Button>
-        </Form>
-      </Card>
+      {loadError && <Alert type="error" showIcon style={{ marginBottom: 16 }} title="Не удалось загрузить пары" description={loadError} />}
 
-      {loadError && <Alert type="error" showIcon style={{ marginBottom: 16 }} message="Не удалось загрузить пары" description={loadError} />}
-
-      {restaurantId && token && !loadError && (
+      {!loadError && (
         <>
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col xs={24} md={16}>
