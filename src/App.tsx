@@ -7,7 +7,7 @@ import BrandingPage from './pages/restaurant/BrandingPage'
 import QRPage from './pages/restaurant/QRPage'
 import PairingsPage from './pages/restaurant/PairingsPage'
 import BookingsPage from './pages/jobs/BookingsPage'
-import DashboardPage from './pages/shift/DashboardPage'
+import HallPage from './pages/hall/HallPage'
 
 export default function App() {
   return (
@@ -22,13 +22,14 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Navigate to="/shift/dashboard" replace />} />
+            <Route index element={<Navigate to="/shift/hall" replace />} />
             <Route path="restaurant/profile" element={<ProfilePage />} />
             <Route path="restaurant/branding" element={<BrandingPage />} />
             <Route path="restaurant/qr" element={<QRPage />} />
             <Route path="restaurant/pairings" element={<PairingsPage />} />
             <Route path="jobs/bookings" element={<BookingsPage />} />
-            <Route path="shift/dashboard" element={<DashboardPage />} />
+            <Route path="shift/hall" element={<HallPage />} />
+            <Route path="shift/dashboard" element={<Navigate to="/shift/hall" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>

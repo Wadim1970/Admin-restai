@@ -8,3 +8,67 @@
 
 /* Выключенная пара блюд — приглушена */
 .pair-disabled td { opacity: 0.5; }
+
+/* ── Раздел «Зал»: схема зала ── */
+/* На телефоне схема не сжимается до нечитаемой — прокручивается вбок. */
+.hall-plan-scroll { overflow-x: auto; padding-bottom: 22px; margin-bottom: -22px; }
+.hall-plan-scroll > .hall-plan { min-width: 680px; }
+.hall-plan {
+  position: relative;
+  width: 100%;
+  background-color: #fbfbfc;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 5% 8%;
+  border: 1px solid #e3e5ea;
+  border-radius: 12px;
+  overflow: hidden;
+  user-select: none;
+}
+.hall-plan--editing { border-color: #1677ff; background-color: #f5f9ff; }
+.hall-plan__empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  color: #8c8f97; font-size: 15px;
+}
+.hall-table { position: absolute; cursor: pointer; touch-action: none; }
+.hall-plan--editing .hall-table { cursor: grab; }
+.hall-table__shape {
+  position: absolute; inset: 0;
+  border: 2px solid; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.15s;
+}
+.hall-table:hover .hall-table__shape { box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16); }
+.hall-table__shape--call { border-color: #d30000 !important; border-width: 3px; animation: hall-call 1.2s ease-in-out infinite; }
+@keyframes hall-call {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(211, 0, 0, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(211, 0, 0, 0); }
+}
+.hall-table__text {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none; text-align: center; line-height: 1.1; padding: 2px; overflow: hidden;
+}
+.hall-table__number { font-size: clamp(13px, 1.6vw, 20px); font-weight: 700; }
+.hall-table__line { font-size: clamp(9px, 0.72vw, 11px); opacity: 0.9; white-space: nowrap; line-height: 1.15; }
+.hall-table__badge {
+  position: absolute; top: -9px; right: -9px; background: #fa8c16; color: #fff;
+  font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 8px; pointer-events: none;
+}
+.hall-table__waiter {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px;
+  font-size: 11px; color: #5c6070; white-space: nowrap; pointer-events: none;
+}
+.hall-table__waiter--none { color: #ff4d4f; font-weight: 600; }
+.hall-table__resize {
+  position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px;
+  background: #1677ff; border: 2px solid #fff; border-radius: 3px; cursor: nwse-resize;
+}
+
+/* Шкала дня в истории стола */
+.hall-timeline { position: relative; height: 34px; background: #f4f5f7; border-radius: 6px; margin: 4px 0 18px; }
+.hall-timeline__seg {
+  position: absolute; top: 4px; bottom: 4px; background: #3d6afa; border-radius: 4px; cursor: pointer; min-width: 3px;
+}
+.hall-timeline__seg--active { background: #15b200; }
+.hall-timeline__seg--current { outline: 2px solid #1f2a44; }
+.hall-timeline__tick { position: absolute; top: 100%; font-size: 10px; color: #8c8f97; transform: translateX(-50%); margin-top: 2px; }
