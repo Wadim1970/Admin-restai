@@ -3,7 +3,15 @@
 // нет; VITE_RESTAURANT_ID в сборке меняет ресторан). Когда появится вход,
 // ресторан будет браться из него.
 
-export const API = (import.meta.env.VITE_WAITER_API_URL || 'https://waiter.restai.pro').replace(/\/$/, '')
+// Сервер: на нашем домене (admin.restai.pro) — тот же адрес, nginx отдаёт
+// /api/ серверу официанта; иначе (временная копия на Vercel) — waiter.restai.pro.
+// VITE_WAITER_API_URL в сборке перекрывает оба варианта.
+function apiBase() {
+  const env = import.meta.env.VITE_WAITER_API_URL
+  if (env) return env.replace(/\/$/, '')
+  return window.location.hostname.endsWith('restai.pro') ? '' : 'https://waiter.restai.pro'
+}
+export const API = apiBase()
 
 const DEMO_RESTAURANT_ID = 'dd89773c-0952-4fd1-9510-514094a928ee'
 
