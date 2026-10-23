@@ -8,6 +8,8 @@ import QRPage from './pages/restaurant/QRPage'
 import PairingsPage from './pages/restaurant/PairingsPage'
 import BookingsPage from './pages/jobs/BookingsPage'
 import HallPage from './pages/hall/HallPage'
+import WaitersPage from './pages/staff/WaitersPage'
+import WaiterPage from './pages/staff/WaiterPage'
 
 export default function App() {
   return (
@@ -29,6 +31,8 @@ export default function App() {
             <Route path="restaurant/pairings" element={<PairingsPage />} />
             <Route path="jobs/bookings" element={<BookingsPage />} />
             <Route path="shift/hall" element={<HallPage />} />
+            <Route path="shift/waiters" element={<WaitersPage />} />
+            <Route path="shift/waiters/:id" element={<WaiterPage />} />
             <Route path="shift/dashboard" element={<Navigate to="/shift/hall" replace />} />
           </Route>
         </Routes>

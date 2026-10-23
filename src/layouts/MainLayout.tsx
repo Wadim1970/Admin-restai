@@ -42,6 +42,7 @@ const menuItems = [
     label: 'Контроль смены',
     children: [
       { key: '/shift/hall', label: 'Зал' },
+      { key: '/shift/waiters', label: 'Официанты' },
       { key: '/shift/calls', label: 'Вызовы' },
       { key: '/shift/kitchen', label: 'Кухня' },
       { key: '/shift/orders', label: 'Заказы' },
@@ -95,7 +96,7 @@ export default function MainLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[location.pathname.replace(/^(\/shift\/waiters)\/.+$/, '$1')]}
           defaultOpenKeys={openKeys}
           items={menuItems}
           onClick={({ key }) => { navigate(key); if (narrow) setCollapsed(true) }}

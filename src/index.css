@@ -72,3 +72,24 @@
 .hall-timeline__seg--active { background: #15b200; }
 .hall-timeline__seg--current { outline: 2px solid #1f2a44; }
 .hall-timeline__tick { position: absolute; top: 100%; font-size: 10px; color: #8c8f97; transform: translateX(-50%); margin-top: 2px; }
+
+/* Столбиковый график (раздел «Официанты») */
+.bar-chart { width: 100%; }
+.bar-chart__plot {
+  display: flex; align-items: flex-end; gap: 2px;
+  border-bottom: 1px solid #d9d9d9; padding-top: 18px;
+}
+.bar-chart__col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; cursor: default; }
+.bar-chart__col:hover { background: rgba(0, 0, 0, 0.03); }
+.bar-chart__bar { width: min(70%, 28px); background: #1677ff; border-radius: 4px 4px 0 0; }
+.bar-chart__bar--zero { background: transparent; }
+.bar-chart__value { position: absolute; top: -18px; font-size: 11px; color: #3a3d45; white-space: nowrap; }
+.bar-chart__axis { display: flex; gap: 2px; }
+.bar-chart__tick { flex: 1; text-align: center; font-size: 10px; color: #8c8f97; padding-top: 4px; white-space: nowrap; overflow: visible; }
+
+/* Официант без работы в периоде — приглушён */
+.row-idle td { opacity: 0.55; }
+
+/* Строка сравнения со средним по ресторану */
+.cmp-up { color: #389e0d; }
+.cmp-down { color: #cf1322; }
