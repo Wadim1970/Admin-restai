@@ -37,6 +37,8 @@ const columns: ColumnsType<HistoryRow> = [
 
 export default function QRPage() {
   const [token, setToken] = useState(readToken)
+  // Учебный ресторан открыт без токена; для остальных сервер отвечает 401 — тогда просим токен.
+  const [needAuth, setNeedAuth] = useState(false)
   const [draft, setDraft] = useState('')
   const [data, setData] = useState<QrResponse | null>(null)
   const [imageUrl, setImageUrl] = useState('')
@@ -45,7 +47,6 @@ export default function QRPage() {
   const [msg, ctx] = message.useMessage()
 
   const load = useCallback(async () => {
-    if (!token) return
     setLoading(true)
     try {
       const d = await adminFetch<QrResponse>('/api/admin/qr', { token })
@@ -53,12 +54,17 @@ export default function QRPage() {
       if (d.current) url = URL.createObjectURL(await adminBlob('/api/qr-image', { query: { d: d.current.date }, token }))
       setImageUrl((old) => { if (old) URL.revokeObjectURL(old); return url })
       setData(d)
+      setNeedAuth(false)
       setError('')
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
-        saveToken('')
-        setToken('')
-        setError('Токен не подошёл. Введите токен администратора ещё раз.')
+        setNeedAuth(true)
+        if (token) {
+          // Токен не подошёл: забываем его. Следующая загрузка (уже без токена) сообщение не сбрасывает.
+          saveToken('')
+          setToken('')
+          setError('Токен не подошёл. Введите токен администратора ещё раз.')
+        }
       } else {
         setError(e instanceof Error ? e.message : String(e))
       }
@@ -96,15 +102,15 @@ export default function QRPage() {
     }
   }
 
-  if (!token) {
+  if (needAuth && !data) {
     return (
       <div>
         {ctx}
         <Title level={4} style={{ marginBottom: 24 }}>QR-коды</Title>
         <Card style={{ maxWidth: 480 }}>
           <Paragraph>
-            QR открывает официантам доступ к смене, поэтому раздел закрыт токеном администратора.
-            Он хранится в настройках сервера; здесь вводится один раз и помнится до закрытия вкладки.
+            Для этого ресторана раздел закрыт токеном администратора: QR открывает официантам доступ к смене.
+            Токен хранится в настройках сервера; здесь вводится один раз и помнится до закрытия вкладки.
           </Paragraph>
           {error && <Alert type="error" message={error} showIcon style={{ marginBottom: 16 }} />}
           <Space.Compact style={{ width: '100%' }}>
