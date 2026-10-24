@@ -27,7 +27,13 @@ export class ApiError extends Error {
   }
 }
 
-export interface FetchOpts { method?: string; query?: Record<string, string | undefined>; body?: Record<string, unknown> }
+export interface FetchOpts {
+  method?: string
+  query?: Record<string, string | undefined>
+  body?: Record<string, unknown>
+  // Токен администратора (X-Admin-Token) — для разделов, закрытых даже у учебного ресторана.
+  token?: string
+}
 
 // restaurantId подставляется сам: в query для GET, в тело для остальных.
 export async function adminFetch<T>(path: string, opts: FetchOpts = {}): Promise<T> {
@@ -42,7 +48,7 @@ export async function adminFetch<T>(path: string, opts: FetchOpts = {}): Promise
   try {
     res = await fetch(`${API}${path}${params.size ? `?${params}` : ''}`, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(opts.token ? { 'X-Admin-Token': opts.token } : {}) },
       body: method === 'GET' ? undefined : JSON.stringify({ restaurantId, ...opts.body }),
     })
   } catch {
@@ -53,4 +59,21 @@ export async function adminFetch<T>(path: string, opts: FetchOpts = {}): Promise
   const json = await res.json().catch(() => ({}))
   if (!res.ok) throw new ApiError(json.error || `Ошибка ${res.status}`, res.status)
   return json as T
+}
+
+// Картинка (PNG) с сервера как Blob — для страниц, где нужен файл, а не JSON.
+export async function adminBlob(path: string, opts: { query?: Record<string, string | undefined>; token?: string } = {}): Promise<Blob> {
+  const params = new URLSearchParams({ restaurantId: currentRestaurantId() })
+  for (const [k, v] of Object.entries(opts.query || {})) if (v) params.set(k, v)
+  let res: Response
+  try {
+    res = await fetch(`${API}${path}?${params}`, { headers: opts.token ? { 'X-Admin-Token': opts.token } : {} })
+  } catch {
+    throw new ApiError('Сервер не ответил. Проверьте интернет и попробуйте ещё раз.', 0)
+  }
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}))
+    throw new ApiError(json.error || `Ошибка ${res.status}`, res.status)
+  }
+  return res.blob()
 }
