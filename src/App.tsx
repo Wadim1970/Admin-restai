@@ -10,6 +10,7 @@ import BookingsPage from './pages/jobs/BookingsPage'
 import HallPage from './pages/hall/HallPage'
 import WaitersPage from './pages/staff/WaitersPage'
 import WaiterPage from './pages/staff/WaiterPage'
+import KitchenPage from './pages/kitchen/KitchenPage'
 
 export default function App() {
   return (
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="shift/hall" element={<HallPage />} />
             <Route path="shift/waiters" element={<WaitersPage />} />
             <Route path="shift/waiters/:id" element={<WaiterPage />} />
+            <Route path="shift/kitchen" element={<KitchenPage />} />
             <Route path="shift/dashboard" element={<Navigate to="/shift/hall" replace />} />
           </Route>
         </Routes>

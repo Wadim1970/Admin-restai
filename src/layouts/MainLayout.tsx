@@ -45,7 +45,6 @@ const menuItems = [
       { key: '/shift/waiters', label: 'Официанты' },
       { key: '/shift/calls', label: 'Вызовы' },
       { key: '/shift/kitchen', label: 'Кухня' },
-      { key: '/shift/orders', label: 'Заказы' },
       { key: '/shift/complaints', label: 'Жалобы' },
       { key: '/shift/reviews', label: 'Оценки' },
       { key: '/shift/stats', label: 'Статистика' },
