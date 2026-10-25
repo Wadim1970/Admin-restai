@@ -291,7 +291,8 @@ function AiTab({ data }: { data: StatsResponse }) {
       )}
     </Card>
   )
-  if (!ai.waiter.offered && !ai.guestMenu.offered) return <Empty description="За период подсказок ИИ не было" />
+  const cart = ai.guestCart
+  if (!ai.waiter.offered && !ai.guestMenu.offered && !cart?.offered && !cart?.dessertAsked) return <Empty description="За период подсказок ИИ не было" />
   return (
     <>
       <Alert
@@ -299,11 +300,31 @@ function AiTab({ data }: { data: StatsResponse }) {
         showIcon
         style={{ marginBottom: 12 }}
         title={`По подсказкам ИИ продано на ${money(ai.revenue)} — ${ai.share}% выручки периода`}
-        description="Считаются блюда, которые гость взял после подсказки: официант предложил по подсказке или гость добавил из «К этому блюду подойдёт» в меню."
+        description="Считаются блюда, которые гость взял после подсказки: официант предложил по подсказке, гость добавил из «К этому блюду подойдёт» в меню или по совету в корзине."
       />
       <Row gutter={[12, 12]}>
-        <Col xs={24} lg={12}>{block('Подсказки официанту', ai.waiter, 'Официант показал подсказку гостю; «взяли» — блюдо ушло в заказ.')}</Col>
-        <Col xs={24} lg={12}>{block('Подсказки гостю в меню', ai.guestMenu, 'Пары «К этому блюду подойдёт» в гостевом меню.')}</Col>
+        <Col xs={24} lg={8}>{block('Подсказки официанту', ai.waiter, 'Официант показал подсказку гостю; «взяли» — блюдо ушло в заказ.')}</Col>
+        <Col xs={24} lg={8}>{block('Подсказки гостю в меню', ai.guestMenu, 'Пары «К этому блюду подойдёт» в гостевом меню.')}</Col>
+        {cart && <Col xs={24} lg={8}>{block('Советы в корзине', cart, 'Гость открыл корзину — ИИ подсказал, чего не хватает к завтраку, обеду или ужину.')}</Col>}
+        {cart && (cart.byGap.length > 0 || cart.dessertAsked > 0) && (
+          <Col xs={24}>
+            <Card size="small" title="Советы в корзине: чего не хватало">
+              {cart.byGap.length > 0 && (
+                <Table rowKey="key" size="small" pagination={false} dataSource={cart.byGap} columns={[
+                  { title: 'Предложили', dataIndex: 'label' },
+                  { title: 'Показано', dataIndex: 'offered', align: 'right' },
+                  { title: 'Взяли', dataIndex: 'accepted', align: 'right' },
+                  { title: 'Конверсия', dataIndex: 'rate', align: 'right', render: (v: number) => <Progress percent={v} size="small" style={{ width: 120, margin: 0 }} /> },
+                ]} />
+              )}
+              {cart.dessertAsked > 0 && (
+                <Text style={{ display: 'block', marginTop: 8 }}>
+                  Всё было в заказе — ИИ похвалил выбор и спросил про десерт: {cart.dessertAsked} раз, согласились {cart.dessertYes} ({Math.round((cart.dessertYes / cart.dessertAsked) * 100)}%). Согласившимся десерт предлагает официант после горячего.
+                </Text>
+              )}
+            </Card>
+          </Col>
+        )}
         {ai.waiter.byTechnique.length > 0 && (
           <Col xs={24}>
             <Card size="small" title="Какие приёмы работают (подсказки официанту)">

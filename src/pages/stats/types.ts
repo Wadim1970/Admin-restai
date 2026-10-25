@@ -33,6 +33,12 @@ export interface StatsResponse {
   ai: {
     waiter: Upsell & { byTechnique: Group[]; byCategory: Group[]; topDishes: TopDish[] }
     guestMenu: Upsell & { topDishes: TopDish[] }
+    guestCart?: Upsell & {
+      topDishes: TopDish[]
+      byGap: { key: string; label: string; offered: number; accepted: number; rate: number }[]
+      dessertAsked: number
+      dessertYes: number
+    }
     revenue: number
     share: number
   }
