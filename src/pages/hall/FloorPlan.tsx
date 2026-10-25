@@ -19,7 +19,7 @@ export function defaultSize(shape: Shape) {
 }
 
 // Нерасставленные столы — сеткой, по номерам.
-export function effectiveLayouts(tables: HallTable[], draft: Map<string, Layout>) {
+export function effectiveLayouts(tables: Pick<HallTable, 'id' | 'number' | 'capacity' | 'layout'>[], draft: Map<string, Layout>) {
   const out = new Map<string, Required<{ [K in keyof Layout]: NonNullable<Layout[K]> }>>()
   let free = 0
   for (const t of [...tables].sort((a, b) => a.number - b.number)) {

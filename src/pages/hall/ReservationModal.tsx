@@ -5,7 +5,7 @@ import type { Reservation } from './types'
 import { RES_STATUS, localParts, zonedIso } from './format'
 
 interface Values {
-  date: Dayjs; from: Dayjs; to: Dayjs; guestCount: number
+  date: Dayjs; from: Dayjs; to: Dayjs; guestCount: number; tableId?: string | null
   guestName?: string; guestPhone?: string; comment?: string; status: Reservation['status']
 }
 
@@ -17,11 +17,17 @@ interface Props {
   reservation: Reservation | null // null — новая
   onCancel: () => void
   onSave: (body: Record<string, unknown>) => Promise<void>
+  // Выбор стола (раздел «Брони»); без него стол задан тем, откуда открыли.
+  tables?: { id: string; number: number; capacity: number }[]
+  tableId?: string | null
+  // Брони — с сегодняшнего дня и не дальше maxDate.
+  minDate?: string
+  maxDate?: string
 }
 
 // Бронь стола: время — по часам ресторана (даже если админка открыта в
 // другом часовом поясе).
-export default function ReservationModal({ open, tz, defaultDate, capacity, reservation, onCancel, onSave }: Props) {
+export default function ReservationModal({ open, tz, defaultDate, capacity, reservation, onCancel, onSave, tables, tableId, minDate, maxDate }: Props) {
   const [form] = Form.useForm<Values>()
   const [saving, setSaving] = useState(false)
 
@@ -34,15 +40,16 @@ export default function ReservationModal({ open, tz, defaultDate, capacity, rese
         date: dayjs(s.date), from: dayjs(`2000-01-01T${s.time}`), to: dayjs(`2000-01-01T${e.time}`),
         guestCount: reservation.guestCount, guestName: reservation.guestName || undefined,
         guestPhone: reservation.guestPhone || undefined, comment: reservation.comment || undefined, status: reservation.status,
+        tableId: reservation.tableId ?? '',
       })
     } else {
       form.resetFields()
       form.setFieldsValue({
         date: dayjs(defaultDate), from: dayjs('2000-01-01T19:00'), to: dayjs('2000-01-01T21:00'),
-        guestCount: Math.min(2, capacity) || 2, status: 'confirmed',
+        guestCount: Math.min(2, capacity) || 2, status: 'confirmed', tableId: tableId ?? '',
       })
     }
-  }, [open, reservation, tz, defaultDate, capacity, form])
+  }, [open, reservation, tz, defaultDate, capacity, form, tableId])
 
   const submit = async () => {
     const v = await form.validateFields()
@@ -61,6 +68,7 @@ export default function ReservationModal({ open, tz, defaultDate, capacity, rese
         guestPhone: v.guestPhone || '',
         comment: v.comment || '',
         status: v.status,
+        ...(tables ? { tableId: v.tableId || null } : {}),
       })
     } catch (e) {
       message.error(e instanceof Error ? e.message : String(e))
@@ -82,7 +90,12 @@ export default function ReservationModal({ open, tz, defaultDate, capacity, rese
     >
       <Form form={form} layout="vertical" requiredMark={false}>
         <Form.Item label="Дата" name="date" rules={[{ required: true, message: 'Укажите дату' }]}>
-          <DatePicker format="D MMMM YYYY" style={{ width: '100%' }} allowClear={false} />
+          <DatePicker
+            format="D MMMM YYYY"
+            style={{ width: '100%' }}
+            allowClear={false}
+            disabledDate={(d) => (!!minDate && d.format('YYYY-MM-DD') < minDate) || (!!maxDate && d.format('YYYY-MM-DD') > maxDate)}
+          />
         </Form.Item>
         <div style={{ display: 'flex', gap: 12 }}>
           <Form.Item label="С" name="from" rules={[{ required: true, message: 'Время' }]} style={{ flex: 1 }}>
@@ -95,11 +108,18 @@ export default function ReservationModal({ open, tz, defaultDate, capacity, rese
             <InputNumber min={1} max={200} style={{ width: '100%' }} />
           </Form.Item>
         </div>
+        {tables && (
+          <Form.Item label="Стол" name="tableId">
+            <Select
+              options={[{ value: '', label: 'Без стола — посадим на месте' }, ...[...tables].sort((a, b) => a.number - b.number).map((t) => ({ value: t.id, label: `№ ${t.number} · ${t.capacity} ${t.capacity === 1 ? 'место' : t.capacity < 5 ? 'места' : 'мест'}` }))]}
+            />
+          </Form.Item>
+        )}
         <Form.Item label="Имя гостя" name="guestName">
           <Input maxLength={120} />
         </Form.Item>
         <Form.Item label="Телефон" name="guestPhone">
-          <Input maxLength={40} inputMode="tel" />
+          <Input maxLength={40} inputMode="tel" placeholder="+7 900 000-00-00 — по номеру узнаем гостя" />
         </Form.Item>
         <Form.Item label="Комментарий" name="comment">
           <Input.TextArea maxLength={500} autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Например: день рождения, нужен детский стул" />

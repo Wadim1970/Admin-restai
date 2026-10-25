@@ -43,7 +43,7 @@ const menuItems = [
     children: [
       { key: '/shift/hall', label: 'Зал' },
       { key: '/shift/waiters', label: 'Официанты' },
-      { key: '/shift/calls', label: 'Вызовы' },
+      { key: '/shift/bookings', label: 'Брони' },
       { key: '/shift/kitchen', label: 'Кухня' },
       { key: '/shift/reviews', label: 'Жалобы и оценки' },
       { key: '/shift/stats', label: 'Статистика' },
