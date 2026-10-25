@@ -51,7 +51,7 @@ export default function SlowTab() {
         <Spin spinning={loading}>
           <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
             <Col xs={12} md={6}><Card size="small"><Statistic title="Измерено блюд" value={s!.measured} /></Card></Col>
-            <Col xs={12} md={6}><Card size="small"><Statistic title="Дольше норматива" value={s!.late} suffix={s!.measured ? <Text type="secondary" style={{ fontSize: 14 }}>{s!.latePct}%</Text> : null} valueStyle={s!.late ? { color: '#cf1322' } : undefined} /></Card></Col>
+            <Col xs={12} md={6}><Card size="small"><Statistic title="Дольше норматива" value={s!.late} suffix={s!.measured ? <Text type="secondary" style={{ fontSize: 14 }}>{s!.latePct}%</Text> : null} styles={{ content: s!.late ? { color: '#cf1322' } : undefined }} /></Card></Col>
             <Col xs={12} md={6}><Card size="small"><Statistic title="Среднее опоздание" value={s!.late ? `${s!.avgDelayMin} мин` : '—'} /></Card></Col>
             <Col xs={12} md={6}><Card size="small"><Statistic title="Без норматива в меню" value={s!.noNorm} /></Card></Col>
           </Row>

@@ -84,6 +84,17 @@ export default function HallPage() {
 
   useEffect(() => { load() }, [load])
 
+  // ?table=<id> — пришли из другого раздела (жалобы): открыть историю стола.
+  const tableParam = params.get('table')
+  useEffect(() => {
+    if (!tableParam || !hall) return
+    const t = hall.tables.find((x) => x.id === tableParam)
+    if (t) { setZone(t.zone); setOpenTable(t.id) }
+    const next = new URLSearchParams(params)
+    next.delete('table')
+    setParams(next, { replace: true })
+  }, [tableParam, hall, params, setParams])
+
   // Сегодня — обновляем каждые 30 секунд (кроме режима редактирования).
   useEffect(() => {
     if (hall?.mode !== 'today' || editing) return
