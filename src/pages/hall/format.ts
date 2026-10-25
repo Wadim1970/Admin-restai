@@ -27,9 +27,11 @@ export const RES_STATUS: Record<string, { label: string; color: string }> = {
   no_show: { label: 'Не пришли', color: 'red' },
 }
 
-// Вызов официанта: причина — свободный текст гостя; age_check — проверка возраста.
+// Вызов официанта: причина — свободный текст гостя; age_check — проверка
+// возраста; dessert — гость разрешил позже предложить десерт.
 export function callLabel(kind: string | null, reason: string | null) {
   if (kind === 'age_check') return 'Подтвердить возраст'
+  if (kind === 'dessert') return 'Предложить десерт'
   return reason || 'Вызов официанта'
 }
 
