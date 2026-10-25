@@ -87,9 +87,17 @@
 .bar-chart__axis { display: flex; gap: 2px; }
 .bar-chart__tick { flex: 1; text-align: center; font-size: 10px; color: #8c8f97; padding-top: 4px; white-space: nowrap; overflow: visible; }
 
+/* Блюдо в стопе — строка с розовым фоном */
+.row-stopped td { background: #fff1f0 !important; }
+
 /* Официант без работы в периоде — приглушён */
 .row-idle td { opacity: 0.55; }
 
 /* Строка сравнения со средним по ресторану */
 .cmp-up { color: #389e0d; }
 .cmp-down { color: #cf1322; }
+
+/* Уровень приоритета блюда — выбранный виден сразу */
+.prio-seg--1 .ant-segmented-item-selected { background: #fff1b8; color: #874d00; }
+.prio-seg--2 .ant-segmented-item-selected { background: #ffd666; color: #613400; }
+.prio-seg--3 .ant-segmented-item-selected { background: #fa8c16; color: #fff; }
