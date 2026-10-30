@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  Alert, AutoComplete, Button, Cascader, Checkbox, Col, Collapse, Drawer, Form, Image, Input, InputNumber, Popconfirm,
-  Row, Segmented, Select, Space, Switch, Typography, message,
+  Alert, AutoComplete, Button, Cascader, Checkbox, Col, Collapse, Drawer, Form, Input, InputNumber, Popconfirm,
+  Row, Segmented, Select, Space, Switch, Typography, Upload, message,
 } from 'antd'
-import { DeleteOutlined, MinusCircleOutlined, PlusOutlined } from '@ant-design/icons'
+import { DeleteOutlined, MinusCircleOutlined, PictureOutlined, PlusOutlined, UploadOutlined } from '@ant-design/icons'
 import { adminFetch } from '../../lib/adminApi'
+import { resizeDishPhoto } from '../../lib/resizeImage'
 import {
   MEAL_LABELS, ROLE_LABELS, TYPE_LABELS, isPopularSection,
   type Dish, type MenuResponse, type ModifierGroup, type ProductType, type TreeNode,
@@ -60,6 +61,7 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
 }) {
   const [form] = Form.useForm<FormValues>()
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const sectionName = Form.useWatch('section', form) || ''
   const productType = Form.useWatch('productType', form) || 'food'
   const imageUrl = Form.useWatch('imageUrl', form)
@@ -169,6 +171,22 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
       message.error(e instanceof Error ? e.message : String(e))
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Фото с компьютера: браузер уменьшает его, сервер кладёт в хранилище и
+  // отдаёт ссылки; в меню они попадут, когда блюдо сохранят.
+  const upload = async (file: File) => {
+    setUploading(true)
+    try {
+      const { photo, thumb } = await resizeDishPhoto(file)
+      const r = await adminFetch<{ imageUrl: string; thumbUrl: string }>('/api/admin/menu-photo', { method: 'POST', body: { dishId: dish?.id, photo, thumb } })
+      form.setFieldsValue({ imageUrl: r.imageUrl, thumbUrl: r.thumbUrl })
+      message.success('Фото загружено. Нажмите «Сохранить», чтобы оно появилось в меню')
+    } catch (e) {
+      message.error(e instanceof Error ? e.message : String(e))
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -294,21 +312,41 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
           </Form.Item>
         )}
 
-        <Row gutter={12}>
-          <Col xs={24} md={16}>
-            <Form.Item name="imageUrl" label="Фото (ссылка)" rules={[{ pattern: /^(https?:\/\/.+)?$/, message: 'Ссылка должна начинаться с https://' }]}>
-              <Input placeholder="https://…/borsch.jpg" allowClear />
-            </Form.Item>
-            <Form.Item name="thumbUrl" label="Миниатюра для списка (ссылка, необязательно)" rules={[{ pattern: /^(https?:\/\/.+)?$/, message: 'Ссылка должна начинаться с https://' }]}>
-              <Input placeholder="Если пусто — гость видит основное фото" allowClear />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={8}>
-            {imageUrl
-              ? <Image key={imageUrl} src={imageUrl} width="100%" style={{ borderRadius: 8, maxHeight: 150, objectFit: 'cover' }} fallback={NO_PHOTO} />
-              : <div style={{ height: 120, borderRadius: 8, background: '#f5f5f5', display: 'grid', placeItems: 'center', color: '#bfbfbf' }}>нет фото</div>}
-          </Col>
-        </Row>
+        <Form.Item label="Фото" extra="JPG, PNG или WebP — можно перетащить файл в рамку. Фото само уменьшится для меню.">
+          <Row gutter={12} align="middle">
+            <Col xs={24} md={10}>
+              <Upload.Dragger
+                accept="image/*"
+                showUploadList={false}
+                disabled={uploading}
+                beforeUpload={(file) => { upload(file); return Upload.LIST_IGNORE }}
+                style={{ padding: 0 }}
+              >
+                {imageUrl
+                  ? <img key={imageUrl} src={imageUrl} alt="" className="dish-photo" onError={(e) => { e.currentTarget.src = NO_PHOTO }} />
+                  : (
+                    <div className="dish-photo dish-photo--empty">
+                      <PictureOutlined style={{ fontSize: 28 }} />
+                      <div>Перетащите фото или нажмите</div>
+                    </div>
+                  )}
+              </Upload.Dragger>
+            </Col>
+            <Col xs={24} md={14}>
+              <Space wrap style={{ marginBottom: 8 }}>
+                <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => { upload(file); return Upload.LIST_IGNORE }}>
+                  <Button icon={<UploadOutlined />} loading={uploading}>{imageUrl ? 'Заменить фото' : 'Загрузить с компьютера'}</Button>
+                </Upload>
+                {imageUrl && <Button icon={<DeleteOutlined />} onClick={() => form.setFieldsValue({ imageUrl: '', thumbUrl: '' })}>Убрать</Button>}
+              </Space>
+              <Form.Item name="imageUrl" noStyle rules={[{ pattern: /^(https?:\/\/.+)?$/, message: 'Ссылка должна начинаться с https://' }]}>
+                {/* Своя ссылка — прежняя миниатюра уже не к этому фото. */}
+                <Input placeholder="или вставьте ссылку на фото: https://…" allowClear size="small" onChange={() => form.setFieldValue('thumbUrl', '')} />
+              </Form.Item>
+              <Form.Item name="thumbUrl" hidden><Input /></Form.Item>
+            </Col>
+          </Row>
+        </Form.Item>
 
         <Row gutter={12}>
           <Col xs={12} md={8}>
