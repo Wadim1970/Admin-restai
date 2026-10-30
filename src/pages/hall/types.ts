@@ -39,11 +39,15 @@ export interface HallResponse {
   summary: DaySummary | null
 }
 
-export interface SessionItem { name: string; seat: number | null; quantity: number; price: number; modifiers: string[]; comment: string | null; status: string | null }
+export interface SessionItem {
+  name: string; seat: number | null; quantity: number; price: number; modifiers: string[]; comment: string | null; status: string | null
+  // Ушло на кухню → готово; waitMin — сколько ждали, normMin — норматив блюда.
+  sentAt?: string | null; readyAt?: string | null; waitMin?: number | null; normMin?: number | null
+}
 export interface SessionCall { at: string; reason: string | null; kind: string | null; reactionSec: number | null; acknowledgedBy: string | null }
 export interface TableSession {
   id: string; startedAt: string; endedAt: string | null; active: boolean; status: string | null; billType: string | null
-  durationMin: number; guestCount: number | null; waiter: WaiterRef; total: number
+  durationMin: number; guestCount: number | null; firstOrderMin?: number | null; waiter: WaiterRef; total: number
   items: SessionItem[]; calls: SessionCall[]; upsell: { offered: number; accepted: number }
   review: { food: number | null; service: number | null; comment: string | null } | null
 }

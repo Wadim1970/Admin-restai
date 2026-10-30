@@ -9,10 +9,39 @@ import PeriodPicker from '../../components/PeriodPicker'
 import BarChart from '../../components/BarChart'
 import type { Review, ReviewsResponse } from './types'
 import { timeIn } from '../hall/format'
+import VisitModal from './VisitModal'
 
 const { Title, Text } = Typography
 
 type Show = 'complaints' | 'unresolved' | 'all' | 'comments'
+type DayChart = 'complaints' | 'food' | 'service'
+
+// По дням: жалобы, средняя оценка кухни, средняя оценка обслуживания —
+// одна карточка, вкладки в заголовке переключают график.
+function ByDay({ byDay }: { byDay: ReviewsResponse['byDay'] }) {
+  const [chart, setChart] = useState<DayChart>('complaints')
+  const label = (date: string) => (byDay.length > 14 ? dayjs(date).format('D') : dayjs(date).format('dd D'))
+  const bars = byDay.map((d) => {
+    const day = dayjs(d.date).format('D MMMM')
+    if (chart === 'complaints') return { key: d.date, label: label(d.date), value: d.complaints, tip: `${day}: отзывов ${d.reviews}, жалоб ${d.complaints}` }
+    const [avg, count] = chart === 'food' ? [d.foodAvg, d.foodCount] : [d.serviceAvg, d.serviceCount]
+    return { key: d.date, label: label(d.date), value: avg ?? 0, tip: avg != null ? `${day}: ★ ${avg} · оценок ${count}` : `${day}: оценок нет` }
+  })
+  return (
+    <Card
+      size="small"
+      activeTabKey={chart}
+      onTabChange={(k) => setChart(k as DayChart)}
+      tabList={[
+        { key: 'complaints', label: 'Жалобы по дням' },
+        { key: 'food', label: 'Оценки кухни по дням' },
+        { key: 'service', label: 'Оценки обслуживания по дням' },
+      ]}
+    >
+      <BarChart height={130} format={(v) => (chart === 'complaints' ? String(v) : `★ ${v}`)} bars={bars} />
+    </Card>
+  )
+}
 
 // Распределение оценок 5…1 — полосками, число справа.
 function Distribution({ title, scale }: { title: string; scale: ReviewsResponse['summary']['food'] }) {
@@ -43,6 +72,7 @@ export default function ReviewsPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [resolving, setResolving] = useState<Review | null>(null)
+  const [visitId, setVisitId] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const reqId = useRef(0)
 
@@ -101,20 +131,10 @@ export default function ReviewsPage() {
           </Row>
 
           <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-            <Col xs={24} md={multiDay ? 8 : 12}><Distribution title="Кухня" scale={s.food} /></Col>
-            <Col xs={24} md={multiDay ? 8 : 12}><Distribution title="Сервис" scale={s.service} /></Col>
-            {multiDay && (
-              <Col xs={24} md={8}>
-                <Card size="small" title="Жалобы по дням">
-                  <BarChart
-                    height={110}
-                    format={(v) => String(v)}
-                    bars={data.byDay.map((d) => ({ key: d.date, label: data.byDay.length > 14 ? dayjs(d.date).format('D') : dayjs(d.date).format('dd D'), value: d.complaints, tip: `${dayjs(d.date).format('D MMMM')}: отзывов ${d.reviews}, жалоб ${d.complaints}` }))}
-                  />
-                </Card>
-              </Col>
-            )}
+            <Col xs={24} md={12}><Distribution title="Кухня" scale={s.food} /></Col>
+            <Col xs={24} md={12}><Distribution title="Сервис" scale={s.service} /></Col>
           </Row>
+          {multiDay && <div style={{ marginBottom: 12 }}><ByDay byDay={data.byDay} /></div>}
 
           <Card size="small" style={{ marginBottom: 12 }} title={(
             <Segmented
@@ -147,7 +167,7 @@ export default function ReviewsPage() {
                   {r.resolvedNote && <div style={{ marginTop: 4, fontSize: 13 }}><Text type="success">Что сделали: </Text>{r.resolvedNote}</div>}
                 </div>
                 <Space wrap style={{ alignSelf: 'center' }}>
-                  {r.tableId && <Link to={`/shift/hall?date=${r.date}&table=${r.tableId}`}>История стола</Link>}
+                  {r.tableNumber && <Button size="small" type="link" style={{ padding: 0 }} onClick={() => setVisitId(r.id)}>Визит</Button>}
                   {r.waiter?.id && <Link to={`/shift/waiters/${r.waiter.id}?p=day&from=${r.date}`}>Официант</Link>}
                   {r.complaint && (r.resolvedAt
                     ? <Button size="small" icon={<UndoOutlined />} onClick={() => resolve(r, false)}>Открыть снова</Button>
@@ -175,6 +195,8 @@ export default function ReviewsPage() {
           )}
         </Spin>
       )}
+
+      <VisitModal reviewId={visitId} onClose={() => setVisitId(null)} />
 
       <Modal
         open={!!resolving}
