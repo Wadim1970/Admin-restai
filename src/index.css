@@ -25,6 +25,8 @@
   border-radius: 12px;
   overflow: hidden;
   user-select: none;
+  /* Стулья и подписи меряются от ширины схемы (cqw). */
+  container-type: inline-size;
 }
 .hall-plan--editing { border-color: #1677ff; background-color: #f5f9ff; }
 .hall-plan__empty {
@@ -54,8 +56,13 @@
   position: absolute; top: -9px; right: -9px; background: #fa8c16; color: #fff;
   font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 8px; pointer-events: none;
 }
+.hall-table__chairs { position: absolute; inset: 0; pointer-events: none; }
+.plan-chair {
+  position: absolute; width: 2.2cqw; height: 1.3cqw; border-radius: 0.5cqw;
+  background: #dfe2e8; border: 1px solid #c5c8d0;
+}
 .hall-table__waiter {
-  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 4px;
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2.6cqw;
   font-size: 11px; color: #5c6070; white-space: nowrap; pointer-events: none;
 }
 .hall-table__waiter--none { color: #ff4d4f; font-weight: 600; }

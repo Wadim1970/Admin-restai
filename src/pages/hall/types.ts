@@ -33,6 +33,7 @@ export interface HallResponse {
   date: string; today: string; mode: Mode
   day: { from: string; to: string }
   zones: string[]
+  zoneNames?: Record<string, string>
   tables: HallTable[]
   unassignedReservations: Reservation[]
   waiters: { id: string; name: string }[]

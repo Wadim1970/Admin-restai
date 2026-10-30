@@ -18,6 +18,7 @@ export interface BookingsResponse {
   today: string; maxDate: string; date: string
   calendar: { date: string; reservations: number; guests: number; known: number }[]
   zones: string[]
+  zoneNames?: Record<string, string>
   tables: BookingTable[]
   reservations: BookingReservation[]
 }

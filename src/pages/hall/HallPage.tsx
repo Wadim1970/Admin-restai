@@ -1,26 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import {
-  Alert, Button, Card, Col, DatePicker, Form, InputNumber, Modal, Popconfirm, Row, Segmented, Select, Space, Spin,
-  Statistic, Typography, message,
-} from 'antd'
-import {
-  EditOutlined, LeftOutlined, PlusOutlined, ReloadOutlined, RightOutlined, RotateLeftOutlined, RotateRightOutlined, SaveOutlined,
-} from '@ant-design/icons'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Alert, Button, Card, Col, DatePicker, Row, Segmented, Space, Spin, Statistic, Typography } from 'antd'
+import { EditOutlined, LeftOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { adminFetch } from '../../lib/adminApi'
-import type { HallResponse, Layout, Shape } from './types'
-import { STATUS, ZONE_LABELS, dateCaption, duration, money, zoneLabel } from './format'
-import FloorPlan, { defaultSize, effectiveLayouts } from './FloorPlan'
+import type { HallResponse } from './types'
+import { STATUS, dateCaption, duration, money, rememberZoneNames, zoneLabel } from './format'
+import FloorPlan from './FloorPlan'
 import TableDrawer from './TableDrawer'
 
-const { Title, Text } = Typography
-
-const SHAPES: { value: Shape; label: string }[] = [
-  { value: 'round', label: 'Круг' },
-  { value: 'square', label: 'Квадрат' },
-  { value: 'rect', label: 'Прямоуг.' },
-]
+const { Title } = Typography
 
 function Legend({ mode }: { mode: HallResponse['mode'] }) {
   const chip = (bg: string, border: string, label: string, extra: React.CSSProperties = {}) => (
@@ -55,13 +44,7 @@ export default function HallPage() {
   const [loading, setLoading] = useState(false)
   const [zone, setZone] = useState<string | null>(null)
   const [openTable, setOpenTable] = useState<string | null>(null)
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<Map<string, Layout>>(new Map())
-  const [selected, setSelected] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [adding, setAdding] = useState(false)
-  const [addForm] = Form.useForm()
-  const [propsForm] = Form.useForm()
+  const navigate = useNavigate()
   const date = params.get('date') || ''
   const reqId = useRef(0)
 
@@ -73,6 +56,7 @@ export default function HallPage() {
     try {
       const h = await call<HallResponse>('/api/admin/hall', { query: { date } })
       if (id !== reqId.current) return
+      rememberZoneNames(h.zoneNames)
       setHall(h)
       setError('')
     } catch (e) {
@@ -95,24 +79,21 @@ export default function HallPage() {
     setParams(next, { replace: true })
   }, [tableParam, hall, params, setParams])
 
-  // Сегодня — обновляем каждые 30 секунд (кроме режима редактирования).
+  // Сегодня — обновляем каждые 30 секунд.
   useEffect(() => {
-    if (hall?.mode !== 'today' || editing) return
+    if (hall?.mode !== 'today') return
     const t = window.setInterval(load, 30_000)
     return () => window.clearInterval(t)
-  }, [hall?.mode, editing, load])
+  }, [hall?.mode, load])
 
+  // Залы — в порядке из «Ресторан → Столы»; пустые (без столов) не показываем.
   const zones = useMemo(() => {
-    const z = hall?.zones.length ? hall.zones : ['main']
-    return [...z].sort((a, b) => Object.keys(ZONE_LABELS).indexOf(a) - Object.keys(ZONE_LABELS).indexOf(b))
+    const withTables = new Set((hall?.tables || []).map((t) => t.zone))
+    const z = (hall?.zones || []).filter((k) => withTables.has(k))
+    return z.length ? z : ['main']
   }, [hall])
   const currentZone = zone && zones.includes(zone) ? zone : zones[0]
   const zoneTables = useMemo(() => (hall?.tables || []).filter((t) => t.zone === currentZone), [hall, currentZone])
-  const selectedTable = hall?.tables.find((t) => t.id === selected) || null
-
-  useEffect(() => {
-    if (selectedTable) propsForm.setFieldsValue({ number: selectedTable.number, capacity: selectedTable.capacity, zone: selectedTable.zone })
-  }, [selectedTable, propsForm])
 
   const goDate = (d: string | null) => {
     const next = new URLSearchParams(params)
@@ -123,71 +104,6 @@ export default function HallPage() {
   }
   const shift = (n: number) => goDate(dayjs(hall?.date || undefined).add(n, 'day').format('YYYY-MM-DD'))
 
-  const startEdit = () => { setDraft(new Map()); setSelected(null); setEditing(true); setOpenTable(null) }
-  const cancelEdit = () => { setDraft(new Map()); setSelected(null); setEditing(false) }
-
-  const saveLayout = async () => {
-    const layouts = effectiveLayouts(zoneTables, draft)
-    setSaving(true)
-    try {
-      await call('/api/admin/tables', { method: 'PATCH', body: { layout: [...layouts.entries()].map(([id, l]) => ({ id, ...l })) } })
-      message.success('Схема зала сохранена')
-      setEditing(false)
-      setDraft(new Map())
-      setSelected(null)
-      await load()
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : String(e))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const patchSelected = (patch: Partial<Layout>) => {
-    if (!selectedTable) return
-    const cur = effectiveLayouts(zoneTables, draft).get(selectedTable.id)!
-    let next = { ...cur, ...patch }
-    if (patch.shape && patch.shape !== cur.shape) next = { ...next, ...defaultSize(patch.shape) }
-    setDraft(new Map(draft).set(selectedTable.id, next))
-  }
-
-  const saveProps = async () => {
-    if (!selectedTable) return
-    const v = await propsForm.validateFields()
-    try {
-      await call('/api/admin/tables', { method: 'PATCH', body: { id: selectedTable.id, number: v.number, capacity: v.capacity, zone: v.zone } })
-      message.success('Стол обновлён')
-      await load()
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  const removeSelected = async () => {
-    if (!selectedTable) return
-    try {
-      await call('/api/admin/tables', { method: 'PATCH', body: { id: selectedTable.id, isActive: false } })
-      message.success(`Стол ${selectedTable.number} убран со схемы`)
-      setSelected(null)
-      await load()
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  const addTable = async () => {
-    const v = await addForm.validateFields()
-    try {
-      await call('/api/admin/tables', { method: 'POST', body: { number: v.number, capacity: v.capacity, zone: v.zone } })
-      message.success(`Стол ${v.number} добавлен — расставьте его на схеме`)
-      setAdding(false)
-      addForm.resetFields()
-      await load()
-    } catch (e) {
-      message.error(e instanceof Error ? e.message : String(e))
-    }
-  }
-
   if (!hall) {
     return error ? <Alert type="error" showIcon title="Не удалось загрузить зал" description={error} action={<Button onClick={load}>Ещё раз</Button>} /> : <Spin />
   }
@@ -195,25 +111,24 @@ export default function HallPage() {
   const s = hall.summary
   const unassigned = hall.mode !== 'past' ? hall.tables.filter((t) => t.assigned.length === 0) : []
   const bookings = hall.tables.flatMap((t) => t.reservations).filter((r) => r.status !== 'cancelled')
-  const zoneOptions = [...new Set([...Object.keys(ZONE_LABELS), ...hall.zones])].map((z) => ({ value: z, label: zoneLabel(z) }))
 
   return (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>Зал · {hall.restaurant.name}</Title>
         <Space wrap>
-          <Button icon={<LeftOutlined />} onClick={() => shift(-1)} disabled={editing} aria-label="Предыдущий день" />
+          <Button icon={<LeftOutlined />} onClick={() => shift(-1)} aria-label="Предыдущий день" />
           <DatePicker
             value={dayjs(hall.date)}
             onChange={(d) => d && goDate(d.format('YYYY-MM-DD'))}
             allowClear={false}
-            disabled={editing}
+           
             format={() => dateCaption(hall.date, hall.today)}
             style={{ width: 220 }}
           />
-          <Button icon={<RightOutlined />} onClick={() => shift(1)} disabled={editing} aria-label="Следующий день" />
-          <Button onClick={() => goDate(null)} disabled={editing || hall.date === hall.today}>Сегодня</Button>
-          <Button icon={<ReloadOutlined />} onClick={load} loading={loading} disabled={editing} aria-label="Обновить" />
+          <Button icon={<RightOutlined />} onClick={() => shift(1)} aria-label="Следующий день" />
+          <Button onClick={() => goDate(null)} disabled={hall.date === hall.today}>Сегодня</Button>
+          <Button icon={<ReloadOutlined />} onClick={load} loading={loading} aria-label="Обновить" />
         </Space>
       </div>
 
@@ -233,7 +148,7 @@ export default function HallPage() {
         </Row>
       )}
 
-      {unassigned.length > 0 && !editing && (
+      {unassigned.length > 0 && (
         <Alert
           type="warning"
           showIcon
@@ -246,87 +161,22 @@ export default function HallPage() {
       <Card
         size="small"
         title={zones.length > 1
-          ? <Segmented value={currentZone} onChange={(v) => { setZone(String(v)); setSelected(null) }} options={zones.map((z) => ({ value: z, label: zoneLabel(z) }))} />
+          ? <Segmented value={currentZone} onChange={(v) => setZone(String(v))} options={zones.map((z) => ({ value: z, label: zoneLabel(z) }))} />
           : zoneLabel(currentZone)}
-        extra={editing ? (
-          <Space wrap>
-            <Button icon={<PlusOutlined />} onClick={() => {
-              addForm.setFieldsValue({ number: Math.max(0, ...hall.tables.map((t) => t.number)) + 1, capacity: 4, zone: currentZone })
-              setAdding(true)
-            }}>Стол</Button>
-            <Button onClick={cancelEdit}>Отмена</Button>
-            <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={saveLayout}>Сохранить схему</Button>
-          </Space>
-        ) : (
-          <Button icon={<EditOutlined />} onClick={startEdit}>Редактировать схему</Button>
-        )}
+        extra={<Button icon={<EditOutlined />} onClick={() => navigate(`/restaurant/tables?zone=${currentZone}`)}>Изменить схему</Button>}
       >
-        <Row gutter={16}>
-          <Col xs={24} lg={editing ? 18 : 24}>
-            {editing && <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-              Перетаскивайте столы мышкой; синий уголок выбранного стола меняет размер. Расстановка сохранится по кнопке «Сохранить схему».
-            </Text>}
-            <FloorPlan
-              tables={zoneTables}
-              mode={hall.mode}
-              tz={hall.restaurant.timezone}
-              editing={editing}
-              draft={draft}
-              selectedId={editing ? selected : null}
-              onSelect={(id) => (editing ? setSelected(id) : setOpenTable(id))}
-              onMove={(id, l) => setDraft((d) => new Map(d).set(id, l))}
-            />
-            {!editing && <Legend mode={hall.mode} />}
-          </Col>
-          {editing && (
-            <Col xs={24} lg={6}>
-              {!selectedTable ? <Text type="secondary">Выберите стол на схеме</Text> : (
-                <div>
-                  <Title level={5}>Стол {selectedTable.number}</Title>
-                  <div style={{ marginBottom: 12 }}>
-                    <Text type="secondary">Форма</Text>
-                    <Segmented
-                      block
-                      size="small"
-                      value={effectiveLayouts(zoneTables, draft).get(selectedTable.id)?.shape}
-                      onChange={(v) => patchSelected({ shape: v as Shape })}
-                      options={SHAPES}
-                    />
-                  </div>
-                  <div style={{ marginBottom: 16 }}>
-                    <Text type="secondary">Поворот </Text>
-                    <Space>
-                      <Button size="small" icon={<RotateLeftOutlined />} onClick={() => patchSelected({ rotation: ((effectiveLayouts(zoneTables, draft).get(selectedTable.id)?.rotation || 0) - 15) })} />
-                      <Button size="small" icon={<RotateRightOutlined />} onClick={() => patchSelected({ rotation: ((effectiveLayouts(zoneTables, draft).get(selectedTable.id)?.rotation || 0) + 15) })} />
-                    </Space>
-                  </div>
-                  <Form form={propsForm} layout="vertical" size="small">
-                    <Form.Item label="Номер" name="number" rules={[{ required: true }]}><InputNumber min={1} max={9999} style={{ width: '100%' }} /></Form.Item>
-                    <Form.Item label="Мест" name="capacity" rules={[{ required: true }]}><InputNumber min={1} max={100} style={{ width: '100%' }} /></Form.Item>
-                    <Form.Item label="Зона" name="zone" rules={[{ required: true }]}><Select options={zoneOptions} /></Form.Item>
-                    <Space wrap>
-                      <Button size="small" onClick={saveProps}>Применить</Button>
-                      <Popconfirm title={`Убрать стол ${selectedTable.number} со схемы?`} description="История стола сохранится." okText="Убрать" cancelText="Нет" onConfirm={removeSelected}>
-                        <Button size="small" danger>Убрать стол</Button>
-                      </Popconfirm>
-                    </Space>
-                  </Form>
-                </div>
-              )}
-            </Col>
-          )}
-        </Row>
+        <FloorPlan
+          tables={zoneTables}
+          mode={hall.mode}
+          tz={hall.restaurant.timezone}
+          editing={false}
+          draft={new Map()}
+          selectedId={null}
+          onSelect={setOpenTable}
+          onMove={() => {}}
+        />
+        <Legend mode={hall.mode} />
       </Card>
-
-      <Modal open={adding} title="Новый стол" okText="Добавить" cancelText="Отмена" onOk={addTable} onCancel={() => setAdding(false)}>
-        <Form form={addForm} layout="vertical">
-          <Form.Item label="Номер" name="number" rules={[{ required: true, message: 'Укажите номер' }]}><InputNumber min={1} max={9999} style={{ width: '100%' }} /></Form.Item>
-          <Form.Item label="Мест" name="capacity" rules={[{ required: true, message: 'Сколько мест' }]}><InputNumber min={1} max={100} style={{ width: '100%' }} /></Form.Item>
-          <Form.Item label="Зона" name="zone" rules={[{ required: true, message: 'Выберите зону' }]}>
-            <Select options={zoneOptions} showSearch />
-          </Form.Item>
-        </Form>
-      </Modal>
 
       <TableDrawer
         tableId={openTable}

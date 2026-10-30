@@ -7,6 +7,7 @@ import BrandingPage from './pages/restaurant/BrandingPage'
 import QRPage from './pages/restaurant/QRPage'
 import PairingsPage from './pages/restaurant/PairingsPage'
 import MenuPage from './pages/menu/MenuPage'
+import TablesPage from './pages/tables/TablesPage'
 import BookingsPage from './pages/jobs/BookingsPage'
 import HallPage from './pages/hall/HallPage'
 import WaitersPage from './pages/staff/WaitersPage'
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="restaurant/branding" element={<BrandingPage />} />
             <Route path="restaurant/qr" element={<QRPage />} />
             <Route path="restaurant/menu" element={<MenuPage />} />
+            <Route path="restaurant/tables" element={<TablesPage />} />
             <Route path="restaurant/pairings" element={<PairingsPage />} />
             <Route path="jobs/bookings" element={<BookingsPage />} />
             <Route path="shift/hall" element={<HallPage />} />

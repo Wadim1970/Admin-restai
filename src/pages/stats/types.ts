@@ -11,6 +11,7 @@ interface TopDish { name: string; accepted: number; revenue: number }
 export interface DishRow { name: string; section: string | null; quantity: number; revenue: number; orders: number; share: number }
 
 export interface StatsResponse {
+  zoneNames?: Record<string, string>
   restaurant: Restaurant
   today: string
   period: { from: string; to: string; days: number }

@@ -7,7 +7,7 @@ import { adminFetch } from '../../lib/adminApi'
 import { readPeriod, writePeriod, type Period } from '../../lib/period'
 import PeriodPicker from '../../components/PeriodPicker'
 import BarChart from '../../components/BarChart'
-import { duration, money, moneyShort, zoneLabel } from '../hall/format'
+import { duration, money, moneyShort, rememberZoneNames, zoneLabel } from '../hall/format'
 import { reactionShort } from '../staff/compare'
 import type { Kpi, KpiKey, StatsResponse } from './types'
 
@@ -64,7 +64,7 @@ export default function StatsPage() {
     setLoading(true)
     try {
       const d = await adminFetch<StatsResponse>('/api/admin/stats', { query: { from: period.from, to: period.to } })
-      if (id === reqId.current) { setData(d); setError('') }
+      if (id === reqId.current) { rememberZoneNames(d.zoneNames); setData(d); setError('') }
     } catch (e) {
       if (id === reqId.current) setError(e instanceof Error ? e.message : String(e))
     } finally {

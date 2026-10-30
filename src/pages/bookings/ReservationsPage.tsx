@@ -6,7 +6,7 @@ import dayjs from 'dayjs'
 import { adminFetch } from '../../lib/adminApi'
 import { effectiveLayouts } from '../hall/FloorPlan'
 import ReservationModal from '../hall/ReservationModal'
-import { RES_STATUS, ZONE_LABELS, plural, timeIn, zoneLabel } from '../hall/format'
+import { RES_STATUS, plural, rememberZoneNames, timeIn, zoneLabel } from '../hall/format'
 import type { Reservation } from '../hall/types'
 import GuestMarks, { guestIcons } from './GuestMarks'
 import GuestCardDrawer from './GuestCardDrawer'
@@ -115,7 +115,7 @@ export default function ReservationsPage() {
     setLoading(true)
     try {
       const d = await adminFetch<BookingsResponse>('/api/admin/bookings', { query: { date } })
-      if (id === reqId.current) { setData(d); setError('') }
+      if (id === reqId.current) { rememberZoneNames(d.zoneNames); setData(d); setError('') }
     } catch (e) {
       if (id === reqId.current) setError(e instanceof Error ? e.message : String(e))
     } finally {
@@ -135,8 +135,10 @@ export default function ReservationsPage() {
 
   const tz = data?.restaurant.timezone || 'Europe/Moscow'
   const zones = useMemo(() => {
-    const z = data?.zones.length ? data.zones : ['main']
-    return [...z].sort((a, b) => Object.keys(ZONE_LABELS).indexOf(a) - Object.keys(ZONE_LABELS).indexOf(b))
+    // Залы — в порядке из «Ресторан → Столы», только те, где есть столы.
+    const withTables = new Set((data?.tables || []).map((t) => t.zone))
+    const z = (data?.zones || []).filter((k) => withTables.has(k))
+    return z.length ? z : ['main']
   }, [data])
   const currentZone = zone && zones.includes(zone) ? zone : zones[0]
   const zoneTables = (data?.tables || []).filter((t) => t.zone === currentZone)

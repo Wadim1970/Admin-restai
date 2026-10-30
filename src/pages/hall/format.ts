@@ -8,7 +8,13 @@ export const ZONE_LABELS: Record<string, string> = {
   veranda: 'Веранда',
   banquet: 'Банкетный зал',
 }
-export const zoneLabel = (z: string) => ZONE_LABELS[z] || z
+// Свои названия залов ресторана (Ресторан → Столы) приходят с сервера
+// (zoneNames в ответах «Зала», «Броней», «Столов», «Статистики»).
+const zoneNames: Record<string, string> = {}
+export function rememberZoneNames(names: Record<string, string> | undefined) {
+  if (names) Object.assign(zoneNames, names)
+}
+export const zoneLabel = (z: string) => zoneNames[z] || ZONE_LABELS[z] || z
 
 // Статусы посадки — как в приложении официанта.
 export const STATUS: Record<string, { label: string; color: string }> = {
