@@ -25,6 +25,8 @@ function DishRow({ d, onOpen }: { d: Dish; onOpen: () => void }) {
     d.cookTimeMin != null && `готовится ${d.cookTimeMin} мин`,
     kbjuLine(d),
     ...d.specs.map((s) => `${s.key}: ${s.value}${/крепост/i.test(s.key) && !/%$/.test(s.value) ? '%' : ''}`),
+    d.grape,
+    d.vintage && `${d.vintage} г.`,
   ].filter(Boolean)
   return (
     <div className="menu-dish" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onOpen()}>
@@ -41,7 +43,8 @@ function DishRow({ d, onOpen }: { d: Dish; onOpen: () => void }) {
         </div>
         {facts.length > 0 && <Text type="secondary" style={{ fontSize: 12 }}>{facts.join(' · ')}</Text>}
         {d.description && <div className="menu-dish__line">{d.description}</div>}
-        {d.ingredients.length > 0 && <div className="menu-dish__line menu-dish__line--muted">Состав: {d.ingredients.join(', ')}</div>}
+        {d.ingredients.length > 0 && <div className="menu-dish__line menu-dish__line--muted">{d.productType === 'alcohol' ? 'Вкус' : 'Состав'}: {d.ingredients.join(', ')}</div>}
+        {d.aroma && <div className="menu-dish__line menu-dish__line--muted">Аромат: {d.aroma}</div>}
         {d.tags.length > 0 && <div style={{ marginTop: 2 }}>{d.tags.map((t) => <Tag key={t} variant="filled" style={{ fontSize: 11 }}>{t}</Tag>)}</div>}
       </div>
       <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

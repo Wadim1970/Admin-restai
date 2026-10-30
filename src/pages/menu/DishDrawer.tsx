@@ -29,6 +29,9 @@ interface FormValues {
   ingredients: string
   kcal: number | null; protein: number | null; fat: number | null; carbs: number | null
   specs: { key: string; value: string }[]
+  aroma: string
+  grape: string
+  vintage: number | null
   tags: string[]
   imageUrl: string
   thumbUrl: string
@@ -41,10 +44,24 @@ interface FormValues {
   modifiers: ModifierGroup[]
 }
 
-const SPEC_KEYS = ['Крепость', 'Полнота', 'Горечь', 'Сладость', 'Кислотность', 'Танины', 'Выдержка', 'Регион', 'Сорт винограда']
+const SPEC_KEYS = ['Крепость', 'Полнота', 'Кислотность', 'Танины', 'Сладость', 'Горечь', 'Выдержка', 'Регион']
+const GRAPES = ['Cabernet Sauvignon', 'Merlot', 'Pinot Noir', 'Syrah', 'Malbec', 'Tempranillo', 'Sangiovese', 'Nebbiolo', 'Primitivo', 'Saperavi',
+  'Sauvignon Blanc', 'Chardonnay', 'Riesling', 'Pinot Grigio', 'Gewürztraminer', 'Chenin Blanc', 'Grüner Veltliner', 'Albariño', 'Glera', 'Muscat', 'Рислинг', 'Ркацители', 'Саперави']
+
+// Вино (а не пиво или виски): по названию, разделу или месту у официанта.
+const WINE_RE = /вин|wine|шампан|игрист|просекк|prosecco|брют|brut|cava|кава\b|портвейн|херес|ламбруск|lambrusco|сангри/i
 
 // Ссылка не открылась — серый квадрат с подписью.
 const NO_PHOTO = `data:image/svg+xml;utf8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="100%" height="100%" fill="#f5f5f5"/><text x="50%" y="50%" fill="#999" font-family="sans-serif" font-size="16" text-anchor="middle">фото не открылось</text></svg>')}`
+
+// У вина в характеристиках всегда есть строки «Полнота» и «Кислотность» —
+// пустые не сохраняются.
+function withWineSpecs(dish: Dish | null) {
+  const specs = dish?.specs || []
+  if (dish?.productType !== 'alcohol' || !WINE_RE.test(`${dish.name} ${dish.section}`)) return specs
+  const missing = ['Полнота', 'Кислотность'].filter((k) => !specs.some((x) => x.key === k)).map((key) => ({ key, value: '' }))
+  return [...specs, ...missing]
+}
 
 const pathOf = (p: Dish['place'] | undefined) => [p?.sectionId, p?.subsectionId, p?.subSubsectionId].filter(Boolean) as string[]
 
@@ -64,6 +81,8 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
   const [uploading, setUploading] = useState(false)
   const sectionName = Form.useWatch('section', form) || ''
   const productType = Form.useWatch('productType', form) || 'food'
+  const watchedName = Form.useWatch('name', form) || ''
+  const watchedPlace = Form.useWatch('placePath', form) as string[] | undefined
   const imageUrl = Form.useWatch('imageUrl', form)
 
   const known = (name: string) => data.sections.find((s) => s.name === name)
@@ -104,7 +123,10 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
       description: dish?.description || '',
       ingredients: (dish?.ingredients || []).join(', '),
       kcal: dish?.kbju?.kcal ?? null, protein: dish?.kbju?.protein ?? null, fat: dish?.kbju?.fat ?? null, carbs: dish?.kbju?.carbs ?? null,
-      specs: dish?.specs || [],
+      specs: withWineSpecs(dish),
+      aroma: dish?.aroma || '',
+      grape: dish?.grape || '',
+      vintage: dish?.vintage ?? null,
       tags: dish?.tags || [],
       imageUrl: dish?.imageUrl || '',
       thumbUrl: dish?.thumbUrl || '',
@@ -151,6 +173,9 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
       ingredients: v.ingredients,
       kbju: { kcal: v.kcal, protein: v.protein, fat: v.fat, carbs: v.carbs },
       specs: v.specs,
+      aroma: v.aroma,
+      grape: v.grape,
+      vintage: v.vintage,
       tags: v.tags,
       imageUrl: v.imageUrl,
       thumbUrl: v.thumbUrl,
@@ -200,6 +225,19 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
       message.error(e instanceof Error ? e.message : String(e))
     }
   }
+
+  const placeNames = (() => {
+    const out: string[] = []
+    let level: TreeNode[] | undefined = data.tree
+    for (const id of watchedPlace || []) {
+      const n: TreeNode | undefined = level?.find((x) => x.id === id)
+      if (!n) break
+      out.push(n.name)
+      level = n.children
+    }
+    return out
+  })()
+  const wine = WINE_RE.test([watchedName, sectionName, ...placeNames].join(' ')) || !!dish?.grape || !!dish?.vintage
 
   const sectionOptions = [...sectionsOrder.map((n) => ({ value: n, label: n }))]
   const isPopularCopy = !!dish && isPopularSection(dish.section)
@@ -274,12 +312,25 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
           </Col>
         </Row>
 
-        <Form.Item name="description" label="Описание для гостя">
-          <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} maxLength={2000} placeholder="Классический борщ на говяжьем бульоне с бородинским хлебом и сметаной" />
+        {/* У алкоголя карточка гостя: «О напитке», «Вкус», «Аромат», «Характеристики». */}
+        <Form.Item name="description" label={productType === 'alcohol' ? 'О напитке' : 'Описание для гостя'}>
+          <Input.TextArea
+            autoSize={{ minRows: 2, maxRows: 6 }} maxLength={2000}
+            placeholder={productType === 'alcohol' ? 'Свежее белое вино из Новой Зеландии' : 'Классический борщ на говяжьем бульоне с бородинским хлебом и сметаной'}
+          />
         </Form.Item>
-        <Form.Item name="ingredients" label="Состав" extra="Ингредиенты через запятую — гость видит их списком">
-          <Input.TextArea autoSize={{ minRows: 2, maxRows: 8 }} placeholder="свекла, капуста, говядина, сметана" />
+        <Form.Item
+          name="ingredients"
+          label={productType === 'alcohol' ? 'Вкус' : 'Состав'}
+          extra={productType === 'alcohol' ? 'Ноты вкуса через запятую' : 'Ингредиенты через запятую — гость видит их списком'}
+        >
+          <Input.TextArea autoSize={{ minRows: 2, maxRows: 8 }} placeholder={productType === 'alcohol' ? 'цитрус, зелёное яблоко, минеральность' : 'свекла, капуста, говядина, сметана'} />
         </Form.Item>
+        {productType === 'alcohol' && (
+          <Form.Item name="aroma" label="Аромат" extra="Гость видит отдельным абзацем после «Вкуса»">
+            <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} maxLength={1000} placeholder="Крыжовник, лайм и свежескошенная трава" />
+          </Form.Item>
+        )}
 
         {productType !== 'alcohol' && (
           <>
@@ -293,8 +344,23 @@ export default function DishDrawer({ open, dish, section, data, drafts, sections
           </>
         )}
 
+        {productType === 'alcohol' && wine && (
+          <Row gutter={12}>
+            <Col xs={24} md={16}>
+              <Form.Item name="grape" label="Сорт винограда">
+                <AutoComplete options={GRAPES.map((g) => ({ value: g }))} placeholder="Sauvignon Blanc" filterOption={(i, o) => String(o?.value).toLowerCase().includes(i.toLowerCase())} />
+              </Form.Item>
+            </Col>
+            <Col xs={24} md={8}>
+              <Form.Item name="vintage" label="Год производства">
+                <InputNumber min={1800} max={new Date().getFullYear() + 1} placeholder="2021" style={{ width: '100%' }} />
+              </Form.Item>
+            </Col>
+          </Row>
+        )}
+
         {productType !== 'food' && (
-          <Form.Item label="Свойства напитка" extra="Гость видит их в карточке: «Крепость» — рядом с ценой, остальное — строками">
+          <Form.Item label={productType === 'alcohol' ? 'Характеристики' : 'Свойства напитка'} extra="Гость видит их в карточке: «Крепость» — рядом с ценой, остальное — строками">
             <Form.List name="specs">
               {(fields, { add, remove }) => (
                 <>

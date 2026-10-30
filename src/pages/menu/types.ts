@@ -21,6 +21,10 @@ export interface Dish {
   ingredients: string[]
   kbju: { kcal: number | null; protein: number | null; fat: number | null; carbs: number | null } | null
   specs: { key: string; value: string }[]
+  // Вино: свои поля (в базе — ключи nutritional_info).
+  aroma: string
+  grape: string
+  vintage: number | null
   tags: string[]
   imageUrl: string
   thumbUrl: string
