@@ -30,6 +30,8 @@ function ByDay({ byDay }: { byDay: ReviewsResponse['byDay'] }) {
   return (
     <Card
       size="small"
+      style={{ height: '100%' }}
+      tabProps={{ size: 'small', tabBarGutter: 12 }}
       activeTabKey={chart}
       onTabChange={(k) => setChart(k as DayChart)}
       tabList={[
@@ -47,7 +49,7 @@ function ByDay({ byDay }: { byDay: ReviewsResponse['byDay'] }) {
 function Distribution({ title, scale }: { title: string; scale: ReviewsResponse['summary']['food'] }) {
   const max = Math.max(1, ...Object.values(scale.distribution))
   return (
-    <Card size="small" title={<span>{title} {scale.avg != null && <Text strong style={{ marginLeft: 8 }}>★ {scale.avg}</Text>} <Text type="secondary" style={{ fontWeight: 400 }}>· оценок {scale.count}</Text></span>}>
+    <Card size="small" style={{ height: '100%' }} title={<span>{title} {scale.avg != null && <Text strong style={{ marginLeft: 8 }}>★ {scale.avg}</Text>}</span>}>
       {[5, 4, 3, 2, 1].map((v) => {
         const n = scale.distribution[v] || 0
         return (
@@ -60,6 +62,7 @@ function Distribution({ title, scale }: { title: string; scale: ReviewsResponse[
           </div>
         )
       })}
+      <Text type="secondary" style={{ fontSize: 12 }}>оценок {scale.count}</Text>
     </Card>
   )
 }
@@ -130,11 +133,12 @@ export default function ReviewsPage() {
             <Col xs={12} md={6}><Card size="small"><Statistic title="Жалоб (оценка 3 и ниже)" value={s.complaints} suffix={<Text type={s.unresolved ? 'danger' : 'secondary'} style={{ fontSize: 14 }}>{s.unresolved ? `не разобрано ${s.unresolved}` : s.complaints ? 'все разобраны' : ''}</Text>} styles={{ content: s.complaints ? { color: '#cf1322' } : undefined }} /></Card></Col>
           </Row>
 
+          {/* Карточка «по дням» шире: в её заголовке три вкладки. */}
           <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
-            <Col xs={24} md={12}><Distribution title="Кухня" scale={s.food} /></Col>
-            <Col xs={24} md={12}><Distribution title="Сервис" scale={s.service} /></Col>
+            <Col xs={24} md={12} xl={multiDay ? 5 : 12}><Distribution title="Кухня" scale={s.food} /></Col>
+            <Col xs={24} md={12} xl={multiDay ? 5 : 12}><Distribution title="Сервис" scale={s.service} /></Col>
+            {multiDay && <Col xs={24} xl={14}><ByDay byDay={data.byDay} /></Col>}
           </Row>
-          {multiDay && <div style={{ marginBottom: 12 }}><ByDay byDay={data.byDay} /></div>}
 
           <Card size="small" style={{ marginBottom: 12 }} title={(
             <Segmented
