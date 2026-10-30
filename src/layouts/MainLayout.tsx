@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Avatar, Badge } from 'antd'
 import {
   ShopOutlined,
-  CalendarOutlined,
+  TeamOutlined,
   DashboardOutlined,
   BellOutlined,
   UserOutlined,
@@ -26,14 +26,14 @@ const menuItems = [
     ],
   },
   {
-    key: 'jobs',
-    icon: <CalendarOutlined />,
-    label: 'Вакансии',
+    key: 'staff',
+    icon: <TeamOutlined />,
+    label: 'Официанты',
     children: [
-      { key: '/jobs/list', label: 'Все вакансии' },
-      { key: '/jobs/bookings', label: 'Заявки' },
-      { key: '/jobs/waiters', label: 'Официанты' },
-      { key: '/jobs/schedule', label: 'Расписание' },
+      { key: '/staff/team', label: 'Штатные' },
+      { key: '/staff/jobs', label: 'Заявки' },
+      { key: '/staff/freelancers', label: 'Фрилансеры' },
+      { key: '/staff/schedule', label: 'Смены' },
     ],
   },
   {

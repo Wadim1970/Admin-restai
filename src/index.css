@@ -154,3 +154,29 @@
 
 .dish-photo { display: block; width: 100%; height: 150px; object-fit: cover; border-radius: 6px; }
 .dish-photo--empty { display: grid; place-content: center; justify-items: center; gap: 6px; color: #8c8c8c; font-size: 13px; }
+
+/* ── Официанты → Смены: недельный график ── */
+.sched { overflow-x: auto; }
+.sched table { width: 100%; min-width: 860px; border-collapse: collapse; table-layout: fixed; }
+.sched th, .sched td { border-bottom: 1px solid #f0f0f0; padding: 4px; text-align: center; vertical-align: middle; }
+.sched th { font-weight: 600; font-size: 13px; padding: 8px 4px; }
+.sched .sched__name { width: 200px; text-align: left; padding-left: 8px; }
+.sched__date { font-weight: 400; color: #8c8c8c; font-size: 12px; }
+.sched__count { font-weight: 400; color: #1677ff; font-size: 11px; }
+.sched .sched__today { background: #f0f7ff; }
+.sched__group { text-align: left !important; color: #8c8c8c; font-size: 12px; padding: 10px 8px 4px !important; }
+.sched__cell {
+  width: 100%; min-height: 44px; border: 1px dashed #d9d9d9; border-radius: 8px; background: #fff; color: #bfbfbf;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit; padding: 4px 2px;
+}
+.sched__cell:hover:not(:disabled) { border-color: #1677ff; color: #1677ff; }
+.sched__cell:disabled { cursor: default; }
+.sched__cell--on { border-style: solid; border-color: #91caff; background: #e6f4ff; color: #0958d9; }
+.sched__cell b { font-size: 12px; font-weight: 600; }
+.sched__cell small { font-size: 10px; color: #5c6070; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sched__cell--free { border-style: solid; border-color: #b7eb8f; background: #f6ffed; color: #389e0d; cursor: default; }
+.sched__cell--wait { border-color: #ffe58f; background: #fffbe6; color: #ad6800; }
+@media (max-width: 575px) {
+  .sched .sched__name { width: 120px; }
+  .sched table { min-width: 720px; }
+}

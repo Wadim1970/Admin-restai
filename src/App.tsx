@@ -8,7 +8,10 @@ import QRPage from './pages/restaurant/QRPage'
 import PairingsPage from './pages/restaurant/PairingsPage'
 import MenuPage from './pages/menu/MenuPage'
 import TablesPage from './pages/tables/TablesPage'
-import BookingsPage from './pages/jobs/BookingsPage'
+import TeamPage from './pages/team/TeamPage'
+import JobsPage from './pages/team/JobsPage'
+import FreelancersPage from './pages/team/FreelancersPage'
+import SchedulePage from './pages/team/SchedulePage'
 import HallPage from './pages/hall/HallPage'
 import WaitersPage from './pages/staff/WaitersPage'
 import WaiterPage from './pages/staff/WaiterPage'
@@ -37,7 +40,11 @@ export default function App() {
             <Route path="restaurant/menu" element={<MenuPage />} />
             <Route path="restaurant/tables" element={<TablesPage />} />
             <Route path="restaurant/pairings" element={<PairingsPage />} />
-            <Route path="jobs/bookings" element={<BookingsPage />} />
+            <Route path="staff/team" element={<TeamPage />} />
+            <Route path="staff/jobs" element={<JobsPage />} />
+            <Route path="staff/freelancers" element={<FreelancersPage />} />
+            <Route path="staff/schedule" element={<SchedulePage />} />
+            <Route path="jobs/*" element={<Navigate to="/staff/jobs" replace />} />
             <Route path="shift/hall" element={<HallPage />} />
             <Route path="shift/waiters" element={<WaitersPage />} />
             <Route path="shift/waiters/:id" element={<WaiterPage />} />
