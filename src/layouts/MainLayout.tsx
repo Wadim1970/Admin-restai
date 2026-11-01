@@ -56,6 +56,7 @@ const menuItems = [
     label: 'Обучение',
     children: [
       { key: '/training/content', label: 'Контент-студия' },
+      { key: '/training/invites', label: 'Приглашения' },
     ],
   },
 ]
