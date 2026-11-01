@@ -7,6 +7,7 @@ import {
   DashboardOutlined,
   BellOutlined,
   UserOutlined,
+  ReadOutlined,
 } from '@ant-design/icons'
 
 const { Sider, Header, Content } = Layout
@@ -47,6 +48,14 @@ const menuItems = [
       { key: '/shift/kitchen', label: 'Кухня' },
       { key: '/shift/reviews', label: 'Жалобы и оценки' },
       { key: '/shift/stats', label: 'Статистика' },
+    ],
+  },
+  {
+    key: 'training',
+    icon: <ReadOutlined />,
+    label: 'Обучение',
+    children: [
+      { key: '/training/content', label: 'Контент-студия' },
     ],
   },
 ]
