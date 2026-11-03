@@ -4,7 +4,7 @@ export type FactStatus = 'draft' | 'confirmed' | 'rejected'
 export type FactType =
   | 'weight' | 'cooking_time_min' | 'ingredients' | 'allergens' | 'may_contain' | 'sauce'
   | 'doneness_recommended' | 'gluten_free_possible' | 'dairy_free_possible' | 'modifications'
-  | 'wine_pairing' | 'flavor_profile' | 'guest_description'
+  | 'wine_pairing' | 'wine_grape' | 'wine_vintage' | 'flavor_profile' | 'guest_description'
 
 // Форма значения зависит от типа факта (проверяет сервер, trainerFactsCore.js).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -93,5 +93,5 @@ export const WEIGHT_UNITS = ['г', 'мл', 'шт', 'кг', 'л']
 // Порядок карточек фактов в карточке блюда: сначала нужные для уровней.
 export const FACT_ORDER: FactType[] = [
   'ingredients', 'weight', 'allergens', 'sauce', 'doneness_recommended', 'gluten_free_possible', 'dairy_free_possible',
-  'modifications', 'wine_pairing', 'may_contain', 'flavor_profile', 'guest_description', 'cooking_time_min',
+  'modifications', 'wine_pairing', 'wine_grape', 'wine_vintage', 'may_contain', 'flavor_profile', 'guest_description', 'cooking_time_min',
 ]

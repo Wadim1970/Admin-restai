@@ -18,6 +18,8 @@ export function emptyValue(type: FactType): FactValue {
     case 'dairy_free_possible': return { value: null, note: '' }
     case 'modifications': return { items: [] }
     case 'wine_pairing': return { item_ids: [] }
+    case 'wine_grape': return { grapes: [] }
+    case 'wine_vintage': return { year: null }
     default: return { text: '' }
   }
 }
@@ -112,6 +114,27 @@ export default function FactEditor({ type, value, onChange, allergens, alcohol }
         />
       )
     }
+    case 'wine_grape': {
+      const grapes: string[] = value.grapes || []
+      return (
+        <div>
+          <Input.TextArea
+            rows={Math.min(Math.max(grapes.length + 1, 2), 6)}
+            value={grapes.join('\n')}
+            onChange={(e) => onChange({ grapes: e.target.value.split('\n') })}
+            placeholder="По одному сорту в строке, например: Мерло"
+          />
+          <Text type="secondary" style={{ fontSize: 12 }}>Для купажа — каждый сорт с новой строки. Пишите так, как в винной карте.</Text>
+        </div>
+      )
+    }
+    case 'wine_vintage':
+      return (
+        <Space>
+          <InputNumber min={1900} max={2100} precision={0} value={value.year} onChange={(v) => onChange({ year: v })} style={{ width: 130 }} placeholder="2021" />
+          <Text type="secondary">год урожая</Text>
+        </Space>
+      )
     case 'wine_pairing':
       return (
         <Select
