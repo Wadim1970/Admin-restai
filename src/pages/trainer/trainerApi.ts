@@ -32,28 +32,23 @@ export async function trainerFetch<T>(path: string, opts: { method?: string; que
   return json as T
 }
 
-export type InviteState = 'ok' | 'used' | 'expired' | 'revoked' | 'missing'
+export type EnrollmentStatus = 'invited' | 'active' | 'closed'
 
-export interface Invite {
+// Доступ официанта к тренажёру (api/admin/enrollments): один email = одно оплаченное место на курс.
+export interface Enrollment {
   id: string
-  code: string
-  codeFormatted: string
-  joinUrl: string | null
-  state: InviteState
-  note: string | null
-  createdAt: string
-  expiresAt: string
-  usedAt: string | null
-  usedBy: string | null
-}
-
-export interface Member {
-  id: string
-  name: string
   email: string
-  registeredAt: string
+  name: string | null
+  status: EnrollmentStatus
+  closedReason: 'admin' | 'completed' | null
+  createdAt: string
+  firstLoginAt: string | null
+  closedAt: string | null
   points: number
   levelPoints: Record<string, number>
   streak: number
   lastActive: string | null
 }
+
+export type AddStatus = 'added' | 'exists' | 'other_restaurant' | 'invalid' | 'error'
+export interface AddResult { line?: string; email: string | null; status: AddStatus; message: string }
