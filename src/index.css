@@ -180,3 +180,9 @@
   .sched .sched__name { width: 120px; }
   .sched table { min-width: 720px; }
 }
+
+/* ── Раздел «Обучение»: контент-студия ── */
+.trainer-fact { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+.trainer-fact:last-of-type { border-bottom: 0; }
+.trainer-thumb { width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex: none; }
+.trainer-thumb--none { background: #f0f0f0; }
