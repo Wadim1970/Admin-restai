@@ -20,7 +20,7 @@ import ReviewsPage from './pages/reviews/ReviewsPage'
 import StatsPage from './pages/stats/StatsPage'
 import ReservationsPage from './pages/bookings/ReservationsPage'
 import ContentStudioPage from './pages/trainer/ContentStudioPage'
-import InvitesPage from './pages/trainer/InvitesPage'
+import EnrollmentsPage from './pages/trainer/EnrollmentsPage'
 
 export default function App() {
   return (
@@ -57,7 +57,8 @@ export default function App() {
             <Route path="shift/calls" element={<Navigate to="/shift/bookings" replace />} />
             <Route path="shift/complaints" element={<Navigate to="/shift/reviews" replace />} />
             <Route path="training/content" element={<ContentStudioPage />} />
-            <Route path="training/invites" element={<InvitesPage />} />
+            <Route path="training/access" element={<EnrollmentsPage />} />
+            <Route path="training/invites" element={<Navigate to="/training/access" replace />} />
             <Route path="shift/dashboard" element={<Navigate to="/shift/hall" replace />} />
           </Route>
         </Routes>
